@@ -1,0 +1,19 @@
+flask
+gunicorn
+python-dotenv
+
+# Vector store + embeddings
+langchain-chroma
+chromadb
+sentence-transformers
+
+# LangChain ecosystem
+langchain
+langchain-community
+langchain-text-splitters
+
+# PDF-loading
+pypdf
+
+# Google Gemini client
+google-genai
