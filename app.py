@@ -8,7 +8,6 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template
 from langchain_chroma import Chroma
-from sentence_transformers import SentenceTransformer
 from langchain_core.prompts import PromptTemplate
 import google.genai as genai
 
@@ -155,22 +154,24 @@ def ask():
 
     docs = retrieve(q, k=12, filters=query_filter)
     ctx = format_context(docs)
-    prompt = RAG_PROMPT.format(
+    raw_prompt = RAG_PROMPT.format(
         question=q,
         context_ref_list=ctx["ref_list"],
         context_text=ctx["context_text"]
     )
 
+    # Gør prompten ASCII-sikker (workaround for encoding-fejl i nogle miljøer)
+    safe_prompt = raw_prompt.encode("ascii", errors="ignore").decode("ascii", errors="ignore")
+
     # Send prompt til Gemini og håndtér evt. fejl
     try:
         resp = genai_client.models.generate_content(
             model=MODEL_NAME,
-            contents=prompt
+            contents=safe_prompt
         )
-        # Fallback: brug .text hvis .output_text ikke findes
-        answer = getattr(resp, "text", None) or getattr(resp, "output_text", None) or "⚠️ Kunne ikke læse modelsvar."
+        answer = getattr(resp, "text", None) or getattr(resp, "output_text", None) or "Fejl: Kunne ikke laese modelsvar."
     except Exception as e:
-        answer = f"⚠️ Fejl ved hentning af svar: {e}"
+        answer = f"Fejl ved hentning af svar: {e!r}"
 
     sources = [
         {
@@ -181,10 +182,11 @@ def ask():
         for d in docs
     ]
 
-    return jsonify({"answer": answer})
+    return jsonify({"answer": answer, "sources": sources})
 
 # -------------------------------------------
 # 4. Run server
 # -------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
