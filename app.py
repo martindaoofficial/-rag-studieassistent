@@ -24,17 +24,14 @@ EMB_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_NAME = "models/gemini-2.5-flash-preview-09-2025"  # Hurtig og gratis model - se evt. list_models.py
 
 # Initialiser SentenceTransformer
-emb_model = SentenceTransformer(EMB_MODEL_NAME)
 
-# Simpel embedder-klasse (krævet af LangChain)
+# Dummy embedder-klasse (erstatter SentenceTransformer)
 class SimpleEmbedder:
     def embed_documents(self, texts):
-        """Laver embeddings til dokumenter"""
-        return emb_model.encode(texts, normalize_embeddings=True).tolist()
+        return texts
 
     def embed_query(self, text):
-        """Laver embeddings til brugerens søgeforespørgsel"""
-        return emb_model.encode([text], normalize_embeddings=True).tolist()[0]
+        return text
 
 embedder = SimpleEmbedder()
 
